@@ -31,6 +31,7 @@ import {
 } from '@/app/admin/tools/issue-tickets/actions'
 import { ApiAllFullProfilesResponse } from '@/app/api/queries/profiles/route'
 
+import { INTEGRATIONS_RETIRED } from '@/config/retired'
 import { DbFullProfile } from '@/types/database/dbTypeAliases'
 
 const initialFormData: AdminIssueTicketInput = {
@@ -383,11 +384,15 @@ export function IssueTicketForm({}: {
             <Checkbox
               id="sendEmail"
               checked={formData.sendEmail}
+              disabled={INTEGRATIONS_RETIRED}
               onCheckedChange={(checked) =>
                 updateFormData({ sendEmail: checked as boolean })
               }
             />
-            <Label htmlFor="sendEmail">Send confirmation email</Label>
+            <Label htmlFor="sendEmail">
+              Send confirmation email
+              {INTEGRATIONS_RETIRED && ' (email retired)'}
+            </Label>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox

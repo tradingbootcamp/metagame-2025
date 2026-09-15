@@ -11,7 +11,7 @@ Features: speaker profiles, sponsors, interactive games, ticket sales.
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4
 - **Database**: Supabase
-- **Payment**: Stripe, OpenNode
+- **Payment**: Stripe (OpenNode/BTC checkout retired)
 - **Package Manager**: pnpm
 - **Testing**: Playwright
 

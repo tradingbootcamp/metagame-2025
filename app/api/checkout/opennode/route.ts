@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { OpenNodeCharge } from 'opennode/dist/types/v1'
-import { Resend } from 'resend'
 import { v4 as uuidv4 } from 'uuid'
 
 import { opennodeDbService } from '@/lib/db/opennode'
+import { getResend } from '@/lib/email'
 import { getSiteUrl } from '@/lib/env'
 import { createChargeRaw } from '@/lib/opennode'
+import { retiredResponse } from '@/lib/retired'
 import {
   TicketPurchaseDetails,
   opennodeChargeSchema,
@@ -14,10 +15,9 @@ import {
 import { getHostedCheckoutUrl } from '@/utils/opennode'
 import { authLevelsToRanks, getCurrentUserAuthRank } from '@/utils/security'
 
+import { INTEGRATIONS_RETIRED } from '@/config/retired'
 import { btcSlidingScaleMinimum, ticketTypeDetails } from '@/config/tickets'
 import { DbTicketType } from '@/types/database/dbTypeAliases'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 const SATOSHIS_PER_BTC = 100_000_000
 /** The one ticket type whose price the buyer picks. */
@@ -26,6 +26,8 @@ const BTC_SLIDING_SCALE_TICKET_TYPE: DbTicketType = 'player'
 const btcToSatoshis = (btc: number) => Math.round(btc * SATOSHIS_PER_BTC)
 
 export async function POST(req: NextRequest) {
+  if (INTEGRATIONS_RETIRED) return retiredResponse('OpenNode checkout')
+
   // Public checkout is retired, so the admin charge tool is the only caller left
   const userIsAdmin =
     (await getCurrentUserAuthRank()) >= authLevelsToRanks.ADMIN
@@ -116,7 +118,7 @@ async function sendChargeCreationEmail(
   const amountBtc = (charge.amount / 100000000).toFixed(6)
   const hostedUrl = getHostedCheckoutUrl(charge.id)
 
-  const { data, error } = await resend.emails.send({
+  const { data, error } = await getResend().emails.send({
     from: 'Metagame 2025 <tickets@mail.metagame.games>',
     to: ticketDetails.purchaserEmail,
     bcc: ['team@metagame.games'],

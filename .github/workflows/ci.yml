@@ -37,9 +37,3 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          # lib/opennode.ts and lib/email.ts construct clients at module scope, so
-          # the build fails without these even though nothing calls out during it.
-          # Placeholders, not real credentials — drop them once those two modules
-          # initialize lazily.
-          OPENNODE_KEY: ci-placeholder
-          RESEND_API_KEY: ci-placeholder

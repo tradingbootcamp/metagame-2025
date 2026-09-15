@@ -4,25 +4,38 @@ import type {
   OpenNodeChargeRequest,
 } from 'opennode/dist/types/v1'
 
-const key = process.env.OPENNODE_KEY
-if (!key) {
-  throw new Error('OPENNODE_KEY is not set')
+function openNodeKey() {
+  const key = process.env.OPENNODE_KEY
+  if (!key) {
+    throw new Error('OPENNODE_KEY is not set')
+  }
+  return key
 }
 
-const env = (process.env.OPENNODE_ENV ||
-  process.env.NEXT_PUBLIC_OPENNODE_ENV ||
-  'dev') as 'live' | 'dev'
-opennode.setCredentials(key, env)
+function openNodeEnv() {
+  return (process.env.OPENNODE_ENV ||
+    process.env.NEXT_PUBLIC_OPENNODE_ENV ||
+    'dev') as 'live' | 'dev'
+}
 
-export { opennode }
+let credentialsSet = false
+
+/** Lazy so a missing OPENNODE_KEY only fails callers, not every route that
+ * happens to share a module graph with this file. See config/retired.ts. */
+export function getOpenNode() {
+  if (!credentialsSet) {
+    opennode.setCredentials(openNodeKey(), openNodeEnv())
+    credentialsSet = true
+  }
+  return opennode
+}
 
 /** Raw fetch function so we can handle the opennode response/see errors better than with the SDK function */
 export async function createChargeRaw(
   payload: OpenNodeChargeRequest,
 ): Promise<OpenNodeCharge> {
-  const env = (process.env.OPENNODE_ENV ||
-    process.env.NEXT_PUBLIC_OPENNODE_ENV ||
-    'dev') as 'live' | 'dev'
+  const key = openNodeKey()
+  const env = openNodeEnv()
   const base =
     env === 'live' ? 'https://api.opennode.com' : 'https://dev-api.opennode.com'
 
@@ -37,7 +50,7 @@ export async function createChargeRaw(
   const res = await fetch(`${base}/v1/charges`, {
     method: 'POST',
     headers: {
-      Authorization: key as string,
+      Authorization: key,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),

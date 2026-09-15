@@ -3,10 +3,20 @@ import { Resend } from 'resend'
 
 import { SOCIAL_LINKS } from '@/utils/urls'
 
+import { INTEGRATIONS_RETIRED } from '@/config/retired'
 import { ticketTypeDetails } from '@/config/tickets'
 import { DbTicketType } from '@/types/database/dbTypeAliases'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let resendClient: Resend | null = null
+
+/** Lazy: `new Resend(undefined)` throws "Missing API key" at construction, so a
+ * module-scope client would break every route sharing this module graph. */
+export function getResend() {
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY)
+  }
+  return resendClient
+}
 
 export interface TicketConfirmationEmailData {
   to: string
@@ -37,6 +47,9 @@ export async function sendTicketConfirmationEmail({
   forExistingUser = false,
   test = false,
 }: TicketConfirmationEmailData) {
+  if (INTEGRATIONS_RETIRED) {
+    return { success: false as const, skipped: 'retired' as const, data: null }
+  }
   try {
     const discordUrl = SOCIAL_LINKS.DISCORD
     const testSubject = test ? 'TEST: ' : ''
@@ -65,7 +78,7 @@ export async function sendTicketConfirmationEmail({
 4. Confirm your account by clicking the verification link sent to your email (required so ticket codes can be used with a different email if needed)
 
 Note: The Ticket Code above allows you to create an account/register for the event. It can be used with any email address and name. To sign up with a different email address than this one, or to transfer this ticket to someone else, go to ${siteUrl}/signup?ticketCode=${ticketCode} and enter the appropriate details with your ticket code.`
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: 'Metagame 2025 <tickets@mail.metagame.games>',
       to,
       bcc: ['team@metagame.games'],
@@ -162,7 +175,7 @@ This is not a puzzle.
       throw error
     }
 
-    return { success: true, data }
+    return { success: true as const, skipped: null, data }
   } catch (error) {
     console.error('Error sending ticket confirmation email:', error)
     throw error
@@ -171,7 +184,10 @@ This is not a puzzle.
 
 /** Method so we can get notified of backend failures */
 export const sendAdminErrorEmail = async (errorMessage: string) => {
-  const { data, error } = await resend.emails.send({
+  if (INTEGRATIONS_RETIRED) {
+    return { success: false as const, skipped: 'retired' as const, data: null }
+  }
+  const { data, error } = await getResend().emails.send({
     from: 'Metagame 2025 <tickets@mail.metagame.games>',
     to: ['team@metagame.games'],
     subject: '**URGENT** METAGAME Admin Error',
@@ -182,5 +198,5 @@ export const sendAdminErrorEmail = async (errorMessage: string) => {
   if (error) {
     console.error('Failed to send admin error email:', error, errorMessage)
   }
-  return { success: !error, data }
+  return { success: !error, skipped: null, data }
 }

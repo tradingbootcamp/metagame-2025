@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { apiError } from '@/lib/apiError'
 import { sessionRsvpsService } from '@/lib/db/sessionRsvps'
+import { retiredResponse } from '@/lib/retired'
+
+import { INTEGRATIONS_RETIRED } from '@/config/retired'
 
 export async function POST(request: NextRequest) {
+  if (INTEGRATIONS_RETIRED) return retiredResponse('Waitlist repair cron')
+
   try {
     // Basic authentication check for cron job
     const authHeader = request.headers.get('authorization')
