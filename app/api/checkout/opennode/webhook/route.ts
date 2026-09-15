@@ -4,9 +4,14 @@ import { OpenNodeCharge, OpenNodeChargeWebhook } from 'opennode/dist/types/v1'
 import { opennodeDbService } from '@/lib/db/opennode'
 import { ticketsService } from '@/lib/db/tickets'
 import { sendAdminErrorEmail, sendTicketConfirmationEmail } from '@/lib/email'
-import { opennode } from '@/lib/opennode'
+import { getOpenNode } from '@/lib/opennode'
+import { retiredResponse } from '@/lib/retired'
+
+import { INTEGRATIONS_RETIRED } from '@/config/retired'
 
 export async function POST(req: NextRequest) {
+  if (INTEGRATIONS_RETIRED) return retiredResponse('OpenNode webhook')
+
   let body: OpenNodeChargeWebhook
 
   try {
@@ -66,7 +71,7 @@ export async function POST(req: NextRequest) {
   // reachable from a production deploy, whatever OPENNODE_ENV is set to.
   const skipSignatureCheck =
     process.env.NODE_ENV !== 'production' && process.env.OPENNODE_ENV === 'dev'
-  const ok = skipSignatureCheck || opennode.signatureIsValid(body)
+  const ok = skipSignatureCheck || getOpenNode().signatureIsValid(body)
   if (!ok) {
     console.error('invalid sig on opennode webhook', body)
     return new NextResponse('invalid sig', { status: 400 })
@@ -77,7 +82,7 @@ export async function POST(req: NextRequest) {
   // Re-fetch the charge and act on OpenNode's copy rather than the body.
   let charge: OpenNodeCharge
   try {
-    charge = await opennode.chargeInfo(body.id)
+    charge = await getOpenNode().chargeInfo(body.id)
   } catch (error) {
     console.error('failed to fetch opennode charge', body.id, error)
     if (!skipSignatureCheck) {

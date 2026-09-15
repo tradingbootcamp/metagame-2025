@@ -57,6 +57,21 @@ export default function CheckoutStatusPage() {
     )
   }
 
+  if (orderStatus.retired) {
+    return (
+      <div className="mx-auto max-w-2xl p-6">
+        <div className="rounded-xl border border-base-300 bg-base-200 p-6">
+          <h1 className="text-xl font-semibold">
+            BTC checkout has been retired
+          </h1>
+          <p className="mt-2 text-sm opacity-70">
+            Metagame 2025 is over and Bitcoin payments are no longer processed.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   const messageButtonThing = () => {
     switch (orderStatus.status) {
       case 'unpaid':

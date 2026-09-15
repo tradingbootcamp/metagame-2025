@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 
+import { INTEGRATIONS_RETIRED } from '@/config/retired'
 import { DbTicketType } from '@/types/database/dbTypeAliases'
 
 type ChargeResponse = {
@@ -118,6 +119,11 @@ export default function OpenNodeChargeTool({}: {
 
   return (
     <div className="space-y-6">
+      {INTEGRATIONS_RETIRED && (
+        <p className="text-sm text-amber-400">
+          Retired: OpenNode checkout is disabled, see config/retired.ts
+        </p>
+      )}
       <div className="space-y-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="flex flex-col gap-2">
@@ -187,7 +193,7 @@ export default function OpenNodeChargeTool({}: {
 
         <Button
           onClick={handleSubmit}
-          disabled={submitting || !isValid}
+          disabled={submitting || !isValid || INTEGRATIONS_RETIRED}
           className="w-full"
         >
           {submitting ? 'Creating Charge...' : 'Create OpenNode Charge'}
